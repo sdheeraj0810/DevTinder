@@ -1,0 +1,20 @@
+{
+  "name": "devtinder",
+  "version": "1.0.0",
+  "description": "Tinder for developers",
+  "main": "index.js",
+  "scripts": {
+    "startt": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "nodejs",
+    "javascript"
+  ],
+  "author": "Dheeraj Sawlani",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
