@@ -1,11 +1,25 @@
-const adminAuth=(req,res,next)=>{        
-    console.log('Validated');
-    
-    const isValid=true;
-    if(!isValid){
-        res.send("User not valid");
-    }   else {
+const userModel = require("../models/user.js");
+// const cookieParser=require("cookie-parser");
+const jwt=require("jsonwebtoken");
+// app.use(cookieParser());
+
+const userAuth=async (req,res,next)=>{  
+    try {      
+        const {token} = req.cookies;
+        if (!token) {
+             return res.status(401).send("No token available"); 
+        }
+        const TokenValidDecodedValue = jwt.verify(token,"Dheeraj@0810"); // {_id:"fkdfjdkf3434"} this will be my user id what I set in token
+        const {_id}=TokenValidDecodedValue;        
+        const user = await userModel.findById(_id);
+        if(!user) {
+            throw new Error("User not valid");
+        }
+        req.user = user;
         next();
-    } 
+    }
+    catch (err) {
+        res.status(400).send("Something went wrong. " + err?.message)
+    }
 };
-module.exports={adminAuth};
+module.exports={userAuth};

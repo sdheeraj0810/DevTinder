@@ -1,23 +1,64 @@
 const express = require("express");
-const { adminAuth } = require("./utils/auth");
+const { userAuth } = require("./utils/auth");
 const connectDB = require("./config/database.js");
 const userModel = require("./models/user.js");
+const { getErrorMessage } = require("./utils/validate.js");
 const app = express();
-
+const bcrypt= require("bcrypt");
+const cookieParser=require("cookie-parser");
+const jwt=require("jsonwebtoken");
 app.use(express.json());
+app.use(cookieParser());
 
 app.post("/signup",async (req,res)=>{    
-    const user=new userModel(req.body); 
+    
+    const {firstName,lastName,emailId,password}=req.body;
+    const passwordhash=await bcrypt.hash(password,10);
+    console.log(passwordhash);
+    const user=new userModel(
+        {
+            firstName:firstName,
+            lastName:lastName,
+            emailId:emailId,
+            password:passwordhash
+        }
+    ); 
     try {
         await user.save();
         res.send("User created successfully");
     }
     catch (err) {
-        res.status(400).send("User creation failed, Error: ",err?.message);
+        //console.log('mylog',err);        
+        const errMsg=getErrorMessage(err);  //err?._message!=undefined ? err?._message : err?.errorResponse?.errmsg;
+        res.status(400).send("User creation failed, Error: " + errMsg);
     }    
 });
 
-app.post("/user/delete",adminAuth,async (req,res)=>{
+app.post("/login",async (req,res)=>{        
+    try {    
+        const {emailId,password}=req.body;
+        const user = await userModel.findOne({emailId:emailId});
+        if(!user) {
+            throw new Error("Invalid credentials.");    
+        }        
+        const isPasswordValid=await user.validatePassword(password);
+        console.log(isPasswordValid);
+        
+        if(!isPasswordValid) {
+            throw new Error("Invalid credentials.");    
+        }
+        const token = await user.getJWT();
+
+        res.cookie("token",token,{httpOnly:true,expires:new Date(Date.now()+360000)} );
+        res.send("User logged in successfully");
+    }
+    catch (err) {        
+        const errMsg=getErrorMessage(err);  //err?._message!=undefined ? err?._message : err?.errorResponse?.errmsg;
+        res.status(400).send("Login failed, Error: " + errMsg);
+    }    
+});
+
+app.post("/user/delete",userAuth,async (req,res)=>{
     try {
         const response = await userModel.deleteOne(req.body);
         console.log(response);        
@@ -28,7 +69,7 @@ app.post("/user/delete",adminAuth,async (req,res)=>{
     }    
 });
 
-app.patch("/user/:userId",adminAuth,async (req,res)=>{
+app.patch("/user/:userId",userAuth,async (req,res)=>{
     try {
         const data = req.body;
         const allowedUpdates=[firstName,lastName,password,skills,photoUrl,about];
@@ -51,15 +92,17 @@ app.patch("/user/:userId",adminAuth,async (req,res)=>{
         res.send("User updated successfully.");
     }
     catch (err) {
-        res.status(400).send("Something went wrong, Error: ",err?.message);
+        const errMsg=getErrorMessage(err);  //err?._message!=undefined ? err?._message : err?.errorResponse?.errmsg;
+        res.status(400).send("Something went wrong, Error: "+errMsg);
     }    
 });
 
-app.get("/users",adminAuth,async (req,res)=>{   
+app.get("/users",userAuth,async (req,res)=>{   
     try { 
         const user=await userModel.find(req.body);
         if(user.length>0) {
-            res.send(user);        }
+            res.send(user);        
+        }
         else {
             res.status(404).send("Users not found.");
         }
@@ -68,7 +111,8 @@ app.get("/users",adminAuth,async (req,res)=>{
         res.status(400).send("Something went wrong, Error: ",err?.message);
     }
 });
-app.get("/user",adminAuth,async (req,res)=>{
+
+app.get("/user",userAuth,async (req,res)=>{
     try {
         const user=await userModel.findOne(req.body);
         if(user) {
@@ -83,6 +127,20 @@ app.get("/user",adminAuth,async (req,res)=>{
     }
 });
 
+app.get("/profile",userAuth,async (req,res)=>{
+    try {
+        const user=req.user;
+        if(user) {
+            res.send(user);
+        }
+        else {
+            res.status(404).send("Profile not found.");
+        }
+    }
+    catch (err) {
+        res.status(400).send("Something went wrong, Error: ",err?.message);
+    }
+});
 
 app.use("/",
     (error,req,res,next)=>{
@@ -95,11 +153,9 @@ app.use("/",
 
 connectDB().then(()=>{
     console.log("Connected to DB");    
-    app.listen(3000,()=>{
-    console.log('Server started successfully on port 3000.');
+    app.listen(8080,()=>{
+    console.log('Server started successfully on port 8080.');
 });
 }).catch(err=>{
     console.log(err," Connection to DB failed");
 });
-
-
