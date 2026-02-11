@@ -4,59 +4,25 @@ const connectDB = require("./config/database.js");
 const userModel = require("./models/user.js");
 const { getErrorMessage } = require("./utils/validate.js");
 const app = express();
-const bcrypt= require("bcrypt");
 const cookieParser=require("cookie-parser");
-const jwt=require("jsonwebtoken");
 app.use(express.json());
 app.use(cookieParser());
 
-app.post("/signup",async (req,res)=>{    
-    
-    const {firstName,lastName,emailId,password}=req.body;
-    const passwordhash=await bcrypt.hash(password,10);
-    console.log(passwordhash);
-    const user=new userModel(
-        {
-            firstName:firstName,
-            lastName:lastName,
-            emailId:emailId,
-            password:passwordhash
-        }
-    ); 
-    try {
-        await user.save();
-        res.send("User created successfully");
-    }
-    catch (err) {
-        //console.log('mylog',err);        
-        const errMsg=getErrorMessage(err);  //err?._message!=undefined ? err?._message : err?.errorResponse?.errmsg;
-        res.status(400).send("User creation failed, Error: " + errMsg);
-    }    
-});
+const cors=require("cors");
+app.use(cors({
+    origin:"http://localhost:5173/",
+    credentials:true
+}));
 
-app.post("/login",async (req,res)=>{        
-    try {    
-        const {emailId,password}=req.body;
-        const user = await userModel.findOne({emailId:emailId});
-        if(!user) {
-            throw new Error("Invalid credentials.");    
-        }        
-        const isPasswordValid=await user.validatePassword(password);
-        console.log(isPasswordValid);
-        
-        if(!isPasswordValid) {
-            throw new Error("Invalid credentials.");    
-        }
-        const token = await user.getJWT();
+const authRouter= require("./routes/auth.js");
+const profileRouter= require("./routes/profile.js");
+const requestRouter= require("./routes/request.js");
+const userRouter = require("./routes/user.js");
 
-        res.cookie("token",token,{httpOnly:true,expires:new Date(Date.now()+360000)} );
-        res.send("User logged in successfully");
-    }
-    catch (err) {        
-        const errMsg=getErrorMessage(err);  //err?._message!=undefined ? err?._message : err?.errorResponse?.errmsg;
-        res.status(400).send("Login failed, Error: " + errMsg);
-    }    
-});
+app.use("/",authRouter);
+app.use("/",profileRouter);
+app.use("/",requestRouter);
+app.use("/",userRouter);
 
 app.post("/user/delete",userAuth,async (req,res)=>{
     try {
@@ -66,34 +32,6 @@ app.post("/user/delete",userAuth,async (req,res)=>{
     }
     catch (err) {
         res.status(400).send("Something went wrong, Error: ",err?.message);
-    }    
-});
-
-app.patch("/user/:userId",userAuth,async (req,res)=>{
-    try {
-        const data = req.body;
-        const allowedUpdates=[firstName,lastName,password,skills,photoUrl,about];
-        const isAllowed=Object.keys(data).every((key)=>
-            allowedUpdates.includes(key)
-        );
-        if(!isAllowed) {
-            throw new Error("Updated on these files not allowed.");
-        }
-        if(data?.skills.length>10){
-            throw new Error("Skills cannot be more than 10.");
-        }
-        const response = await userModel.findOneAndUpdate({_id:req.params.userId},data,
-            {   
-                returnDocument:'after',
-                runValidators:true
-            }
-        );
-        console.log(response);        
-        res.send("User updated successfully.");
-    }
-    catch (err) {
-        const errMsg=getErrorMessage(err);  //err?._message!=undefined ? err?._message : err?.errorResponse?.errmsg;
-        res.status(400).send("Something went wrong, Error: "+errMsg);
     }    
 });
 
@@ -120,21 +58,6 @@ app.get("/user",userAuth,async (req,res)=>{
         }
         else {
             res.status(404).send("User not found.");
-        }
-    }
-    catch (err) {
-        res.status(400).send("Something went wrong, Error: ",err?.message);
-    }
-});
-
-app.get("/profile",userAuth,async (req,res)=>{
-    try {
-        const user=req.user;
-        if(user) {
-            res.send(user);
-        }
-        else {
-            res.status(404).send("Profile not found.");
         }
     }
     catch (err) {
