@@ -21,10 +21,9 @@ authRouter.post("/signup",async (req,res)=>{
     ); 
     try {
         await user.save();
-        res.send("User created successfully");
+        res.send({message:"User created successfully.", data: []});
     }
     catch (err) {
-        //console.log('mylog',err);        
         const errMsg=getErrorMessage(err);  //err?._message!=undefined ? err?._message : err?.errorResponse?.errmsg;
         res.status(400).send("User creation failed, Error: " + errMsg);
     }    

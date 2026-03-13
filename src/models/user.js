@@ -56,7 +56,7 @@ const userSchema = new mongoose.Schema({
     },
     photoUrl: {
         type:String,
-        default:"https://png.pngtree.com/png-clipart/20210129/ourmid/pngtree-blue-default-avatar-png-image_2813123.jpg",
+        default:"https://w7.pngwing.com/pngs/205/731/png-transparent-default-avatar-thumbnail.png",
         validate(value) {
             if(!validator.isURL(value)) {
                 throw new Error("Photo URL not valid.")
