@@ -9,7 +9,7 @@ const userAuth=async (req,res,next)=>{
         if (!token) {
              return res.status(401).send("No token available"); 
         }
-        const TokenValidDecodedValue = jwt.verify(token,"Dheeraj@0810"); // {_id:"fkdfjdkf3434"} this will be my user id what I set in token
+        const TokenValidDecodedValue = jwt.verify(token,"Dheeraj@0810"); 
         const {_id}=TokenValidDecodedValue;        
         const user = await userModel.findById(_id);
         if(!user) {

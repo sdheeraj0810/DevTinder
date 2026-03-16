@@ -1,6 +1,6 @@
 const express = require("express");
 const { userAuth } = require("../utils/auth");
-const connectionRequestModel = require("../models/connectionrequest");
+const connectionRequestModel = require("../models/connectionRequest");
 const { getErrorMessage } = require("../utils/validate");
 const userModel = require("../models/user");
 const requestRouter=express.Router();
