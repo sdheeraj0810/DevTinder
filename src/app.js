@@ -79,9 +79,10 @@ app.use("/",
 );
 
 connectDB().then(()=>{
-    console.log("Connected to DB");    
-    app.listen(process.env.PORT,()=>{
-    console.log('Server started successfully on port 8080.');
+    console.log("Connected to DB");   
+    const PORT = process.env.PORT || 8080; 
+    app.listen(PORT,()=>{
+    console.log('Server started successfully on port '+PORT);
 });
 }).catch(err=>{
     console.log(err," Connection to DB failed");
