@@ -1,7 +1,6 @@
 const express = require("express");
 const { userAuth } = require("./utils/auth");
 
-require('dotenv').config();
 
 const connectDB = require("./config/database.js");
 const userModel = require("./models/user.js");
@@ -10,6 +9,7 @@ const app = express();
 const cookieParser=require("cookie-parser");
 app.use(express.json());
 app.use(cookieParser());
+require('dotenv').config();
 
 
 const cors=require("cors");
