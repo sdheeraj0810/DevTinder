@@ -9,7 +9,7 @@ const userAuth=async (req,res,next)=>{
         if (!token) {
              return res.status(401).send("No token available"); 
         }
-        const TokenValidDecodedValue = jwt.verify(token,"Dheeraj@0810"); 
+        const TokenValidDecodedValue = jwt.verify(token,process.env.JWT_TOKEN); 
         const {_id}=TokenValidDecodedValue;        
         const user = await userModel.findById(_id);
         if(!user) {

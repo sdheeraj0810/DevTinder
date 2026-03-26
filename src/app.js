@@ -1,5 +1,8 @@
 const express = require("express");
 const { userAuth } = require("./utils/auth");
+
+require('dotenv').config();
+
 const connectDB = require("./config/database.js");
 const userModel = require("./models/user.js");
 const { getErrorMessage } = require("./utils/validate.js");
@@ -7,6 +10,7 @@ const app = express();
 const cookieParser=require("cookie-parser");
 app.use(express.json());
 app.use(cookieParser());
+
 
 const cors=require("cors");
 app.use(cors({
@@ -76,7 +80,7 @@ app.use("/",
 
 connectDB().then(()=>{
     console.log("Connected to DB");    
-    app.listen(8080,()=>{
+    app.listen(process.env.PORT,()=>{
     console.log('Server started successfully on port 8080.');
 });
 }).catch(err=>{
