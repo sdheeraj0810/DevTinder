@@ -1,8 +1,6 @@
+require('dotenv').config();
 const express = require("express");
 const { userAuth } = require("./utils/auth");
-
-require('dotenv').config();
-
 const connectDB = require("./config/database.js");
 const userModel = require("./models/user.js");
 const { getErrorMessage } = require("./utils/validate.js");
@@ -11,17 +9,21 @@ const cookieParser=require("cookie-parser");
 app.use(express.json());
 app.use(cookieParser());
 
-
+const http = require("http");
 const cors=require("cors");
+
 app.use(cors({
     origin:"http://localhost:5173",
     credentials:true
 }));
 
+// require("./utils/cronjob.js");
+
 const authRouter= require("./routes/auth.js");
 const profileRouter= require("./routes/profile.js");
 const requestRouter= require("./routes/request.js");
 const userRouter = require("./routes/user.js");
+const initSocket = require('./utils/socket.js');
 
 app.use("/",authRouter);
 app.use("/",profileRouter);
@@ -78,10 +80,13 @@ app.use("/",
     }
 );
 
+const server=http.createServer(app);
+initSocket(server);
+
 connectDB().then(()=>{
     console.log("Connected to DB");   
     const PORT = process.env.PORT || 8080; 
-    app.listen(PORT,()=>{
+    server.listen(PORT,()=>{
     console.log('Server started successfully on port '+PORT);
 });
 }).catch(err=>{
